@@ -113,6 +113,14 @@
     -fx-background-color: #626d6e;
 }
 
+/* ==================== 小按钮样式 ==================== */
+.small-button {
+    -fx-font-size: 11px;
+    -fx-padding: 6px 12px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+}
+
 /* ==================== 应用列表 ==================== */
 .app-list {
     -fx-background-color: white;

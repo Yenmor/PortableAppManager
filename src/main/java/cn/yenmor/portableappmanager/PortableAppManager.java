@@ -1,11 +1,9 @@
 package cn.yenmor.portableappmanager;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -38,6 +36,15 @@ public class PortableAppManager extends Application {
     @Override
     public void start(Stage primaryStage) {
         primaryStage.setTitle("Portable App Manager");
+
+        // 设置应用图标
+        try {
+            primaryStage.getIcons().add(
+                new javafx.scene.image.Image(getClass().getResource("/ico.png").toExternalForm())
+            );
+        } catch (Exception e) {
+            System.err.println("Warning: Could not load application icon: " + e.getMessage());
+        }
 
         // 主布局
         VBox mainLayout = new VBox(15);
@@ -132,12 +139,12 @@ public class PortableAppManager extends Application {
         });
 
         // 全选和取消全选按钮
-        Button selectAllButton = new Button("✓ All");
-        Button deselectAllButton = new Button("✗ None");
+        Button selectAllButton = new Button("✓ Select All");
+        Button deselectAllButton = new Button("✗ Deselect All");
 
-        // 设置小按钮样式
-        selectAllButton.setStyle("-fx-font-size: 10px; -fx-padding: 2px 8px; -fx-min-width: 60px;");
-        deselectAllButton.setStyle("-fx-font-size: 10px; -fx-padding: 2px 8px; -fx-min-width: 60px;");
+        // 设置按钮样式
+        selectAllButton.getStyleClass().addAll("info-button", "small-button");
+        deselectAllButton.getStyleClass().addAll("info-button", "small-button");
 
         // 按钮事件
         selectAllButton.setOnAction(e -> {
@@ -150,15 +157,10 @@ public class PortableAppManager extends Application {
             appListView.getSelectionModel().clearSelection();
         });
 
-        // 创建按钮容器并放在左上角
-        HBox selectionButtons = new HBox(5, selectAllButton, deselectAllButton);
-        selectionButtons.setStyle("-fx-padding: 5px; -fx-background-color: rgba(255, 255, 255, 0.9); -fx-background-radius: 5;");
-
-        // 使用StackPane将按钮放在ListView上方
-        StackPane listViewContainer = new StackPane();
-        listViewContainer.getChildren().addAll(appListView, selectionButtons);
-        StackPane.setAlignment(selectionButtons, Pos.TOP_LEFT);
-        StackPane.setMargin(selectionButtons, new Insets(5));
+        // 创建按钮容器
+        HBox selectionButtons = new HBox(10, selectAllButton, deselectAllButton);
+        selectionButtons.getStyleClass().add("button-row");
+        selectionButtons.setAlignment(Pos.CENTER_LEFT);
 
         // 加载应用列表
         loadAppList();
@@ -179,7 +181,8 @@ public class PortableAppManager extends Application {
                 buttonRow3,
                 buttonRow4,
                 statsLabel,
-                listViewContainer
+                appListView,
+                selectionButtons
         );
 
         // 创建场景并应用CSS样式
@@ -197,7 +200,7 @@ public class PortableAppManager extends Application {
 
         // 过滤出 exe bat 文件
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Executable Files", "*.exe"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Executable Files", "*.bat"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Anything file", "*.*"));
 
         // 让打开的目录默认是当前工作目录
         String workingDirectory = System.getProperty("user.dir");

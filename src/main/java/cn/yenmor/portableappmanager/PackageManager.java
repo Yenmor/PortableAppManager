@@ -22,7 +22,7 @@ import java.util.zip.ZipOutputStream;
  */
 public class PackageManager {
     private static final Logger logger = Logger.getLogger(PackageManager.class.getName());
-    private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 65536; // 64KB 缓冲区，提高I/O效率
 
     /**
      * 导出单个应用到ZIP文件
@@ -36,9 +36,9 @@ public class PackageManager {
     }
 
     /**
-     * 导出多个应用到ZIP文件
+     * 导出多个应用到 ZIP 文件
      * @param apps 应用列表
-     * @param zipOutputPath ZIP文件输出路径
+     * @param zipOutputPath ZIP 文件输出路径
      * @param progressCallback 进度回调
      * @return 是否成功
      */
@@ -57,13 +57,16 @@ public class PackageManager {
         }
 
         try {
-            // 创建PackageEntry
+            // 创建 PackageEntry
             PackageEntry packageEntry = new PackageEntry();
             packageEntry.setAppEntries(apps);
 
-            // 创建ZIP文件
+            // 创建 ZIP 文件
             try (ZipOutputStream zos = new ZipOutputStream(
                     new BufferedOutputStream(new FileOutputStream(zipOutputPath)))) {
+
+                // 设置压缩级别：1 = 最快压缩（速度优先），减少CPU占用
+                zos.setLevel(1);
 
                 // 添加manifest.json
                 if (progressCallback != null) {
@@ -81,15 +84,22 @@ public class PackageManager {
                     // 获取应用文件和所在目录（使用配置中的相对路径）
                     String appPath = app.getPath();
                     File appFile = app.getAbsoluteFile();
-                    File appDir = appFile.getParentFile();
+                    //File appDir = appFile.getParentFile();
 
+                    String rootPath = Paths.get(appPath).toString().split("\\\\")[0];
+                    System.out.println("rpt: " + rootPath);
+                    String absRootPath = Paths.get(rootPath).toAbsolutePath().toString();
+                    File appDir = new File(absRootPath);
                     // 计算相对路径中的目录部分（例如："MyDir/app.exe" -> "MyDir/"）
-                    Path appFilePath = Paths.get(appPath);
-                    Path appDirPath = appFilePath.getParent();
-                    String basePath = appDirPath != null ? appDirPath.toString() + "/" : "";
+//                    Path appFilePath = Paths.get(appPath);
+//                    System.out.println("appFilePath: " + appFilePath);
+//                    Path appDirPath = appFilePath.getParent();
+//                    System.out.println("appDirPath: " + appDirPath);
+//                    String basePath = appDirPath != null ? appDirPath.toString() + "/" : "";
+//                    System.out.println("basePath: " + basePath);
 
                     // 添加应用目录到ZIP（从应用所在目录开始打包）
-                    addDirectoryToZip(zos, appDir, basePath, progressCallback);
+                    addDirectoryToZip(zos, appDir, rootPath+"/", progressCallback);
 
                     // 添加图标（如果存在）
                     if (app.getIconPath() != null && !app.getIconPath().isEmpty()) {
@@ -119,8 +129,8 @@ public class PackageManager {
     }
 
     /**
-     * 从ZIP文件导入应用
-     * @param zipPath ZIP文件路径
+     * 从 ZIP 文件导入应用
+     * @param zipPath ZIP 文件路径
      * @param targetBasePath 目标基础路径
      * @param strategy 导入策略
      * @return 导入的应用列表
